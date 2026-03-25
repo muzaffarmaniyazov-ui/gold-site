@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Golden Journey — Luxury</title>
+
+  <style>
+    :root{
+      --bg:#070707;
+      --glass: rgba(16,16,16,.52);
+      --glass2: rgba(20,20,20,.72);
+      --gold:#f5d27a;
+      --gold2:#e6c36a;
+      --text:#f7edc7;
+      --muted:rgba(245,210,122,.72);
+      --border:rgba(245,210,122,.16);
+      --border2:rgba(245,210,122,.28);
+      --shadow: 0 24px 70px rgba(0,0,0,.65);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: Georgia, serif;
+      color:var(--text);
+      background: radial-gradient(1200px 700px at 25% 18%, rgba(245,210,122,.09), transparent 60%),
+                  radial-gradient(900px 600px at 78% 70%, rgba(245,210,122,.07), transparent 62%),
+                  radial-gradient(600px 400px at 55% 30%, rgba(245,210,122,.04), transparent 65%),
+                  var(--bg);
+      overflow-x:hidden;
+    }
+
+    /* ====== Ambient layers ====== */
+    .noise{
+      position:fixed; inset:0;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E");
+      mix-blend-mode: overlay;
+      opacity:.07;
+      pointer-events:none;
+      z-index:1;
+    }
+    .glow{
+      position:fixed; inset:-220px;
+      background:
+        radial-gradient(520px 330px at 18% 22%, rgba(245,210,122,.11), transparent 62%),
+        radial-gradient(520px 330px at 78% 70%, rgba(245,210,122,.08), transparent 62%),
+        radial-gradient(420px 260px at 62% 35%, rgba(245,210,122,.06), transparent 62%);
+      filter: blur(28px);
+      animation: drift 10s ease-in-out infinite alternate;
+      pointer-events:none;
+      z-index:0;
+    }
+    @keyframes drift{
+      from{ transform: translate3d(-10px,-10px,0) scale(1); }
+      to  { transform: translate3d(18px,14px,0) scale(1.06); }
+    }
+
+    /* Cursor spotlight (WOW) */
+    .spot{
+      position:fixed; inset:0;
+      background: radial-gradient(320px 240px at var(--mx,50%) var(--my,50%),
+        rgba(245,210,122,.15),
+        rgba(245,210,122,.06) 35%,
+        transparent 70%);
+      pointer-events:none;
+      z-index:2;
+      mix-blend-mode: screen;
+      transition: background .05s linear;
+    }
+
+    /* Particle canvas */
+    canvas#particles{
+      position:fixed; inset:0;
+      z-index:3;
+      pointer-events:none;
+      opacity:.55;
+    }
+
+    /* ====== Top bar ====== */
+    .topbar{
+      position:fixed;
+      left: 18px; right: 18px; top: 14px;
+      z-index:20;
+      display:flex; justify-content:space-between; align-items:center; gap:12px;
+      padding: 10px 14px;
+      border:1px solid var(--border);
+      border-radius: 18px;
+      background: rgba(8,8,8,.38);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 18px 60px rgba(0,0,0,.45);
+    }
+
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      letter-spacing:.6px;
+      font-weight:800;
+      color:var(--gold);
+      user-select:none;
+    }
+    .gem{
+      width:12px;height:12px;border-radius:6px;
+      background: radial-gradient(circle at 30% 30%, #fff, var(--gold));
+      box-shadow: 0 0 18px rgba(245,210,122,.55);
+      transform: rotate(18deg);
+    }
+
+    .nav{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+    }
+    .chip{
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid rgba(245,210,122,.20);
+      color:rgba(245,210,122,.92);
+      background: rgba(0,0,0,.22);
+      font-size:14px;
+      cursor:pointer;
+      transition:.22s;
+      user-select:none;
+    }
+    .chip:hover{ transform: translateY(-1px); border-color: rgba(245,210,122,.42); }
+
+    .toggle{
+      display:flex; align-items:center; gap:8px;
+      border:1px solid rgba(245,210,122,.18);
+      padding:6px 10px;
+      border-radius:999px;
+      background: rgba(0,0,0,.18);
+      cursor:pointer;
+      user-select:none;
+      transition:.22s;
+      font-size:14px;
+      color:rgba(245,210,122,.9);
+    }
+    .toggle:hover{ border-color: rgba(245,210,122,.38); transform: translateY(-1px); }
+    .toggle .dot{
+      width:9px;height:9px;border-radius:50%;
+      background: rgba(245,210,122,.35);
+      box-shadow: 0 0 10px rgba(245,210,122,.25);
+    }
+    .toggle.on .dot{
+      background: radial-gradient(circle at 30% 30%, #fff, var(--gold));
+      box-shadow: 0 0 18px rgba(245,210,122,.55);
+    }
+
+    /* ====== Hero ====== */
+    header{
+      position:relative;
+      height: 100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      padding: 90px 18px 40px;
+      z-index:10;
+      perspective: 1000px;
+    }
+
+    .heroCard{
+      width: min(1040px, 92vw);
+      border-radius: 26px;
+      border: 1px solid var(--border);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01));
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position:relative;
+      transform-style: preserve-3d;
+    }
+    .heroBg{
+      position:absolute; inset:0;
+      background:
+        linear-gradient(rgba(0,0,0,.72), rgba(0,0,0,.78)),
+        url("https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&w=1920&q=80")
+        center/cover no-repeat;
+      transform: translateZ(-1px) scale(1.06);
+      filter: saturate(1.05) contrast(1.05);
+    }
+    .heroGlowLine{
+      position:absolute; left:-20%; right:-20%; top:-70px; height:220px;
+      background: radial-gradient(closest-side, rgba(245,210,122,.22), transparent 70%);
+      transform: rotate(10deg);
+      opacity:.55;
+      pointer-events:none;
+    }
+    .heroInner{
+      position:relative;
+      padding: 54px 24px 34px;
+      z-index:2;
+    }
+
+    h1{
+      margin:0;
+      font-size: clamp(44px, 6vw, 84px);
+      line-height: 1.02;
+      letter-spacing: .7px;
+      text-shadow: 0 18px 70px rgba(245,210,122,.12);
+    }
+
+    .shimmer{
+      background: linear-gradient(90deg,
+        rgba(245,210,122,.18),
+        rgba(245,210,122,1),
+        rgba(245,210,122,.18)
+      );
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
+      background-size: 220% 100%;
+      animation: shine 2.8s linear infinite;
+    }
+    @keyframes shine{
+      0%{ background-position: 0% 50%; }
+      100%{ background-position: 220% 50%; }
+    }
+
+    .sub{
+      margin: 14px auto 0;
+      max-width: 820px;
+      color: var(--muted);
+      font-size: clamp(16px, 2vw, 22px);
+      line-height: 1.45;
+    }
+
+    .ctaRow{
+      margin-top: 22px;
+      display:flex;
+      gap:12px;
+      justify-content:center;
+      flex-wrap:wrap;
+    }
+    .btn{
+      border:none;
+      cursor:pointer;
+      border-radius: 999px;
+      padding: 12px 20px;
+      font-size: 16px;
+      font-weight: 800;
+      transition: .22s;
+      position:relative;
+      overflow:hidden;
+      user-select:none;
+    }
+    .btnPrimary{
+      color:#101010;
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      box-shadow: 0 18px 55px rgba(245,210,122,.16);
+    }
+    .btnPrimary:hover{ transform: translateY(-2px); box-shadow: 0 22px 70px rgba(245,210,122,.22); }
+    .btnGhost{
+      color: rgba(245,210,122,.96);
+      background: rgba(0,0,0,.25);
+      border: 1px solid rgba(245,210,122,.30);
+      backdrop-filter: blur(10px);
+    }
+    .btnGhost:hover{ transform: translateY(-2px); border-color: rgba(245,210,122,.55); }
+
+    /* premium underline */
+    .divider{
+      width: min(520px, 70vw);
+      height: 1px;
+      margin: 22px auto 0;
+      background: linear-gradient(90deg, transparent, rgba(245,210,122,.55), transparent);
+    }
+
+    .stats{
+      margin-top: 18px;
+      display:flex;
+      gap: 12px;
+      justify-content:center;
+      flex-wrap:wrap;
+    }
+    .stat{
+      min-width: 175px;
+      padding: 12px 14px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: rgba(10,10,10,.42);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 18px 55px rgba(0,0,0,.35);
+      text-align:left;
+    }
+    .stat .n{ font-size: 20px; font-weight: 900; color: var(--gold); }
+    .stat .t{ margin-top: 4px; font-size: 13px; color: rgba(245,210,122,.78); }
+
+    /* ====== Sections ====== */
+    section{
+      position:relative;
+      z-index:10;
+      padding: 86px 10%;
+    }
+    h2{
+      margin:0 0 44px;
+      text-align:center;
+      font-size: clamp(28px, 4vw, 46px);
+      color: rgba(245,210,122,.96);
+      letter-spacing:.4px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 22px;
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 22px;
+      box-shadow: 0 22px 60px rgba(0,0,0,.58);
+      position:relative;
+      overflow:hidden;
+      transform: translateY(14px);
+      opacity: 0;
+      transition: .55s ease;
+    }
+
+    .card::before{
+      content:"";
+      position:absolute;
+      inset:-60%;
+      background:
+        radial-gradient(circle at 30% 35%, rgba(245,210,122,.18), transparent 55%),
+        radial-gradient(circle at 75% 70%, rgba(245,210,122,.10), transparent 60%);
+      transform: rotate(12deg);
+      opacity: .38;
+      pointer-events:none;
+    }
+
+    .card:hover{
+      transform: translateY(-8px) scale(1.01);
+      border-color: rgba(245,210,122,.34);
+      box-shadow: 0 28px 80px rgba(0,0,0,.70);
+    }
+
+    .card h3{ margin:0 0 10px; }
+    .card p{ margin:0; color: rgba(255,255,255,.82); line-height:1.5; font-size:15px; }
+
+    .tag{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      padding: 7px 10px;
+      margin-bottom: 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(245,210,122,.22);
+      background: rgba(0,0,0,.22);
+      color: rgba(245,210,122,.92);
+      font-size: 13px;
+      width: fit-content;
+    }
+    .spark{
+      width: 8px; height: 8px; border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #fff, var(--gold));
+      box-shadow: 0 0 14px rgba(245,210,122,.52);
+    }
+
+    .in{
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* ====== Gallery slider (wow) ====== */
+    .gallery{
+      width: min(980px, 92vw);
+      margin: 0 auto;
+      border-radius: 22px;
+      border: 1px solid var(--border);
+      background: rgba(12,12,12,.38);
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .galleryTop{
+      padding: 14px 14px 0;
+      display:flex; justify-content:space-between; align-items:center; gap:10px;
+    }
+    .galleryTop b{ color: rgba(245,210,122,.95); }
+    .galleryTop .muted{ color: rgba(245,210,122,.7); font-size:13px; }
+
+    .track{
+      display:flex;
+      gap: 12px;
+      padding: 14px;
+      overflow:auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+    }
+    .shot{
+      flex: 0 0 min(360px, 78vw);
+      height: 220px;
+      border-radius: 18px;
+      border: 1px solid rgba(245,210,122,.16);
+      background-size: cover;
+      background-position:center;
+      scroll-snap-align: start;
+      position:relative;
+      overflow:hidden;
+    }
+    .shot::after{
+      content:"";
+      position:absolute; inset:0;
+      background: linear-gradient(180deg, transparent, rgba(0,0,0,.75));
+    }
+    .shotLabel{
+      position:absolute; left:14px; bottom:14px; right:14px;
+      z-index:2;
+      display:flex; justify-content:space-between; align-items:flex-end; gap:10px;
+    }
+    .shotLabel .t{
+      font-weight:800;
+      color: rgba(245,210,122,.95);
+      text-shadow: 0 16px 50px rgba(0,0,0,.6);
+    }
+    .shotLabel .s{
+      font-size: 13px;
+      color: rgba(255,255,255,.75);
+    }
+
+    /* ====== Footer ====== */
+    footer{
+      position:relative;
+      z-index:10;
+      padding: 34px 18px;
+      text-align:center;
+      color: rgba(255,255,255,.55);
+      border-top: 1px solid rgba(245,210,122,.12);
+      background: rgba(0,0,0,.25);
+      backdrop-filter: blur(10px);
+    }
+
+    /* ====== Popup ====== */
+    .popup{
+      position:fixed; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      background: rgba(0,0,0,.82);
+      z-index: 50;
+      padding: 18px;
+    }
+    .popupBox{
+      width: min(480px, 94vw);
+      background: rgba(14,14,14,.82);
+      border: 1px solid rgba(245,210,122,.22);
+      border-radius: 22px;
+      padding: 22px;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 40px 120px rgba(0,0,0,.75);
+      text-align:center;
+      position:relative;
+      overflow:hidden;
+    }
+    .popupBox::before{
+      content:"";
+      position:absolute; inset:-60%;
+      background: radial-gradient(circle at 30% 30%, rgba(245,210,122,.22), transparent 55%);
+      transform: rotate(12deg);
+      opacity: .35;
+      pointer-events:none;
+    }
+    .popupBox h3{ margin:0 0 10px; color: var(--gold); letter-spacing:.4px; }
+    .popupBox p{ margin:0; color: rgba(255,255,255,.76); line-height:1.5; }
+
+    /* micro */
+    .tiny{ font-size: 12px; color: rgba(245,210,122,.7); margin-top: 10px; }
+
+    /* mobile fixes */
+    @media (max-width: 480px){
+      .topbar{ left: 10px; right:10px; }
+      .nav{ display:none; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="glow"></div>
+  <div class="noise"></div>
+  <div class="spot"></div>
+  <canvas id="particles"></canvas>
+
+  <!-- Popup -->
+  <div class="popup" id="popup">
+    <div class="popupBox">
+      <h3>Diqqat!</h3>
+      <p>
+        Ushbu sahifa — tilla, hashamat va sayohat ilhomi.
+        <b>Davom etish</b> orqali siz premium tajribani boshlaysiz ✨
+      </p>
+      <div class="ctaRow">
+        <button class="btn btnPrimary" onclick="closePopup()">Davom etish</button>
+        <button class="btn btnGhost" onclick="closePopup(true)">Keyinroq</button>
+      </div>
+      <div class="tiny">Tip: kursorni harakatlantiring — “gold spotlight” effektini ko‘rasiz.</div>
+    </div>
+  </div>
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="brand"><span class="gem"></span> Golden Journey</div>
+    <div class="nav">
+      <div class="chip" onclick="go('#travel')">Sayohat</div>
+      <div class="chip" onclick="go('#jewels')">Buyumlar</div>
+      <div class="chip" onclick="go('#gallery')">Gallery</div>
+      <div class="chip" onclick="go('#philosophy')">Falsafa</div>
+    </div>
+    <div class="toggle" id="fxToggle" title="Effektlarni yoqish/o‘chirish">
+      <span class="dot"></span> FX
+    </div>
+  </div>
+
+  <!-- Hero -->
+  <header>
+    <div class="heroCard" id="heroCard">
+      <div class="heroBg"></div>
+      <div class="heroGlowLine"></div>
+      <div class="heroInner">
+        <h1 class="shimmer">Golden Journey</h1>
+        <div class="sub">Tilla — did. Sayohat — investitsiya. Hashamat — tanlov. Bir sahifada premium ilhom.</div>
+
+        <div class="ctaRow">
+          <button class="btn btnPrimary" onclick="go('#travel')">Boshlash</button>
+          <button class="btn btnGhost" onclick="randomPick()">Random ilhom ✨</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="stats">
+          <div class="stat"><div class="n" id="s1">0+</div><div class="t">Luxury yo‘nalishlar</div></div>
+          <div class="stat"><div class="n" id="s2">0+</div><div class="t">Gold & Jewel g‘oyalar</div></div>
+          <div class="stat"><div class="n" id="s3">0+</div><div class="t">Inspiratsiya</div></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Sections -->
+  <section id="travel">
+    <h2>🌍 Sayohat & Tilla</h2>
+    <div class="grid">
+      <div class="card reveal">
+        <div class="tag"><span class="spark"></span> Premium Market</div>
+        <h3>🇦🇪 Dubay</h3>
+        <p>Gold Souk — tilla bozori. Kechqurun yaltirash + “luxury vibe” maksimal.</p>
+      </div>
+      <div class="card reveal">
+        <div class="tag"><span class="spark"></span> Heritage</div>
+        <h3>🇹🇷 Istanbul</h3>
+        <p>Kapalıçarşı — tarix va tilla uyg‘unligi. Har do‘konning o‘z “story”si bor.</p>
+      </div>
+      <div class="card reveal">
+        <div class="tag"><span class="spark"></span> Haute Joaillerie</div>
+        <h3>🇫🇷 Parij</h3>
+        <p>Cartier, Van Cleef & Arpels — hashamat va minimalizmning oltin chizig‘i.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="jewels">
+    <h2>💎 Qimmatbaho Buyumlar</h2>
+    <div class="grid">
+      <div class="card reveal">
+        <div class="tag"><span class="spark"></span> Iconic</div>
+        <h3>Uzuklar</h3>
+        <p>Oltin + brilliant: klassik dizaynlar va zamonaviy “clean luxury”.</p>
+      </div>
+      <div class="card reveal">
+        <div class="tag"><span class="spark"></span> Royal</div>
+        <h3>Marjonlar</h3>
+        <p>Qirollik uslubi: bayram va “signature look” uchun ideal.</p>
+      </div>
+      <div class="card reveal">
+        <div class="tag"><span class="spark"></span> Antique</div>
+        <h3>Antik buyumlar</h3>
+        <p>Tarixga boy san’at: har biri o‘ziga xos, qaytarilmas.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="gallery">
+    <h2>✨ Luxury Gallery</h2>
+
+    <div class="gallery reveal" style="opacity:0; transform:translateY(14px); transition:.55s ease;">
+      <div class="galleryTop">
+        <div>
+          <b>Gold moments</b>
+          <div class="muted">Swipe/scroll — premium kadrlardan ilhom oling</div>
+        </div>
+        <div class="toggle on" id="autoToggle"><span class="dot"></span> Auto</div>
+      </div>
+
+      <div class="track" id="track">
+        <div class="shot" style="background-image:url('https://images.unsplash.com/photo-1520962922320-2038eebab146?auto=format&fit=crop&w=1200&q=80')">
+          <div class="shotLabel">
+            <div>
+              <div class="t">Golden Evening</div>
+              <div class="s">warm luxury tone</div>
+            </div>
+            <div class="s">01</div>
+          </div>
+        </div>
+
+        <div class="shot" style="background-image:url('https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80')">
+          <div class="shotLabel">
+            <div>
+              <div class="t">City Shine</div>
+              <div class="s">night & gold</div>
+            </div>
+            <div class="s">02</div>
+          </div>
+        </div>
+
+        <div class="shot" style="background-image:url('https://images.unsplash.com/photo-1520975916090-3105956dac38?auto=format&fit=crop&w=1200&q=80')">
+          <div class="shotLabel">
+            <div>
+              <div class="t">Jewel Detail</div>
+              <div class="s">macro mood</div>
+            </div>
+            <div class="s">03</div>
+          </div>
+        </div>
+
+        <div class="shot" style="background-image:url('https://images.unsplash.com/photo-1520975661595-6453be3f7070?auto=format&fit=crop&w=1200&q=80')">
+          <div class="shotLabel">
+            <div>
+              <div class="t">Desert Gold</div>
+              <div class="s">Dubai vibe</div>
+            </div>
+            <div class="s">04</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="philosophy">
+    <h2>👑 Boylik falsafasi</h2>
+    <div class="grid">
+      <div class="card reveal">
+        <div class="tag"><span class="spark"></span> Mindset</div>
+        <h3>Boylik</h3>
+        <p>Boylik — faqat pul emas. Bu did, intizom va tanlovlar ketma-ketligi.</p>
+      </div>
+      <div class="card reveal">
+        <div class="tag"><span class="spark"></span> Asset</div>
+        <h3>Tilla</h3>
+        <p>Tilla — vaqt o‘tishi bilan qadri oshadigan, “calm luxury” aktiv.</p>
+      </div>
+      <div class="card reveal">
+        <div class="tag"><span class="spark"></span> Memory</div>
+        <h3>Sayohat</h3>
+        <p>Sayohat — eng qimmat investitsiya: xotira, tajriba va networking.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    © 2026 Golden Journey | Ultra Luxury Experience
+  </footer>
+
+  <script>
+    // ===== Spotlight follow =====
+    const spot = document.querySelector(".spot");
+    let fxOn = true;
+
+    window.addEventListener("mousemove", (e)=>{
+      document.documentElement.style.setProperty("--mx", e.clientX + "px");
+      document.documentElement.style.setProperty("--my", e.clientY + "px");
+    });
+
+    // ===== Smooth navigation =====
+    function go(sel){
+      const el = document.querySelector(sel);
+      if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
+    }
+
+    // ===== Popup =====
+    function closePopup(later=false){
+      document.getElementById("popup").style.display = "none";
+      if(!later) go("#travel");
+      // Start counters after popup
+      startCounts();
+    }
+
+    // ===== Reveal on scroll =====
+    const revealEls = Array.from(document.querySelectorAll(".reveal"));
+    const gallery = document.querySelector(".gallery");
+
+    const io = new IntersectionObserver((entries)=>{
+      entries.forEach(ent=>{
+        if(ent.isIntersecting){
+          ent.target.classList.add("in");
+          // gallery element uses inline fade too
+          if(ent.target.classList.contains("gallery")){
+            ent.target.style.opacity = 1;
+            ent.target.style.transform = "translateY(0)";
+          }
+        }
+      });
+    }, {threshold: .12});
+    revealEls.forEach(el=>io.observe(el));
+    if(gallery) io.observe(gallery);
+
+    // ===== Counters =====
+    let counted = false;
+    function animateCount(id, to){
+      const el = document.getElementById(id);
+      let cur = 0;
+      const step = Math.max(1, Math.floor(to/44));
+      const t = setInterval(()=>{
+        cur += step;
+        if(cur >= to){ cur = to; clearInterval(t); }
+        el.textContent = cur + "+";
+      }, 22);
+    }
+    function startCounts(){
+      if(counted) return;
+      counted = true;
+      animateCount("s1", 18);
+      animateCount("s2", 120);
+      animateCount("s3", 999);
+    }
+
+    // ===== 3D Tilt Hero (WOW) =====
+    const hero = document.getElementById("heroCard");
+    if(hero){
+      const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
+      hero.addEventListener("mousemove",(e)=>{
+        if(!fxOn) return;
+        const r = hero.getBoundingClientRect();
+        const px = (e.clientX - r.left) / r.width;
+        const py = (e.clientY - r.top) / r.height;
+        const rx = clamp((0.5 - py) * 10, -8, 8);
+        const ry = clamp((px - 0.5) * 12, -10, 10);
+        hero.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg) translateY(-2px)`;
+      });
+      hero.addEventListener("mouseleave", ()=>{
+        hero.style.transform = "rotateX(0deg) rotateY(0deg) translateY(0px)";
+      });
+    }
+
+    // ===== Random pick =====
+    function randomPick(){
+      const cards = Array.from(document.querySelectorAll(".card"));
+      if(!cards.length) return;
+      const c = cards[Math.floor(Math.random()*cards.length)];
+      c.scrollIntoView({behavior:"smooth", block:"center"});
+      c.style.borderColor = "rgba(245,210,122,.55)";
+      setTimeout(()=>c.style.borderColor="", 900);
+    }
+
+    // ===== Gallery auto scroll =====
+    const track = document.getElementById("track");
+    const autoToggle = document.getElementById("autoToggle");
+    let auto = true;
+    let autoTimer = null;
+
+    function startAuto(){
+      stopAuto();
+      if(!track || !auto) return;
+      autoTimer = setInterval(()=>{
+        track.scrollBy({left: 320, behavior: "smooth"});
+        // loop
+        if(track.scrollLeft + track.clientWidth >= track.scrollWidth - 10){
+          track.scrollTo({left: 0, behavior: "smooth"});
+        }
+      }, 2400);
+    }
+    function stopAuto(){
+      if(autoTimer){ clearInterval(autoTimer); autoTimer=null; }
+    }
+    if(autoToggle){
+      autoToggle.classList.add("on");
+      autoToggle.addEventListener("click", ()=>{
+        auto = !auto;
+        autoToggle.classList.toggle("on", auto);
+        if(auto) startAuto(); else stopAuto();
+      });
+    }
+    startAuto();
+
+    // ===== FX toggle =====
+    const fxToggle = document.getElementById("fxToggle");
+    if(fxToggle){
+      fxToggle.classList.add("on");
+      fxToggle.addEventListener("click", ()=>{
+        fxOn = !fxOn;
+        fxToggle.classList.toggle("on", fxOn);
+        // disable spotlight + particles visually
+        document.getElementById("particles").style.display = fxOn ? "block" : "none";
+        document.querySelector(".spot").style.display = fxOn ? "block" : "none";
+      });
+    }
+
+    // ===== Particle system (gold dust) =====
+    const canvas = document.getElementById("particles");
+    const ctx = canvas.getContext("2d");
+    let W=0,H=0;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const particles = [];
+    const N = 70;
+
+    function resize(){
+      W = window.innerWidth;
+      H = window.innerHeight;
+      canvas.width = Math.floor(W * dpr);
+      canvas.height = Math.floor(H * dpr);
+      canvas.style.width = W + "px";
+      canvas.style.height = H + "px";
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+    }
+    window.addEventListener("resize", resize);
+    resize();
+
+    function rand(a,b){ return a + Math.random()*(b-a); }
+
+    function initParticles(){
+      particles.length = 0;
+      for(let i=0;i<N;i++){
+        particles.push({
+          x: rand(0,W),
+          y: rand(0,H),
+          r: rand(0.8, 2.2),
+          vx: rand(-0.25, 0.25),
+          vy: rand(-0.18, 0.22),
+          a: rand(0.25, 0.9),
+          tw: rand(0.002, 0.006)
+        });
+      }
+    }
+    initParticles();
+
+    function tick(){
+      if(fxOn){
+        ctx.clearRect(0,0,W,H);
+        for(const p of particles){
+          p.x += p.vx;
+          p.y += p.vy;
+
+          // drift & wrap
+          if(p.x < -10) p.x = W+10;
+          if(p.x > W+10) p.x = -10;
+          if(p.y < -10) p.y = H+10;
+          if(p.y > H+10) p.y = -10;
+
+          // twinkle
+          p.a += (Math.random()-0.5)*p.tw;
+          p.a = Math.max(0.12, Math.min(0.95, p.a));
+
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+          // no explicit colors? (policy says avoid specifying colors when charting; this is not charting)
+          // still, keep minimal:
+          ctx.fillStyle = `rgba(245,210,122,${p.a})`;
+          ctx.fill();
+        }
+      }
+      requestAnimationFrame(tick);
+    }
+    tick();
+  </script>
+</body>
+</html>
