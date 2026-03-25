@@ -1,5 +1,6 @@
 # main.py
 import time
+import os
 from flask import Flask, Response, request
 from flask_socketio import SocketIO, emit, join_room
 
@@ -736,7 +737,8 @@ def ice(data):
         socketio.emit("ice", {"user_id": user_id, "candidate": candidate}, to=ONLINE[user_id]["sid"])
 
 
+
+
 if __name__ == "__main__":
-    # Localhost uchun OK
-    # Real hostingda kamera uchun HTTPS kerak (localhostdan tashqari)
-    socketio.run(app, host="127.0.0.1", port=5000, debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    socketio.run(app, host="0.0.0.0", port=port, debug=False)
